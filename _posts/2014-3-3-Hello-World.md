@@ -3,8 +3,54 @@ layout: post
 title: How to containerize huggingface transformers inference API on your own. 
 ---
 
-Next you can update your site name, avatar and other options using the _config.yml file in the root of your repository (shown below).
+Before going into the details I want to make a quick summary of the post and what you can expect without reading the entire article.
 
-![_config.yml]({{ site.baseurl }}/images/config.png)
+*Since transformer models are widely used for various machine learning tasks nowadays, we will use a pretrained transformers model
+from huggingface and build an inference API and deliver as a Docker image.*
 
-The easiest way to make your first post is to edit this one. Go into /_posts/ and update the Hello World markdown file. For more instructions head over to the [Jekyll Now repository](https://github.com/barryclark/jekyll-now) on GitHub.
+*If you are looking to deploy your own transformer model make sure to upload the model weights to the huggingface repository and you are good to go.*
+
+**Pre-requisites**
+
+* Huggingface account (For uploading the model weights if you want to use a custom model)
+* Docker 
+* Python
+
+**Tools and libraries**
+
+* torch==1.10.2
+* transformers==4.18.0
+* Flask==2.0.2 
+
+*for this demo we will be doing a text-classification task (sentiment-analysis)*
+
+The default model for sentiment analysis in huggingface pipeline api is "distilbert-base-uncased-finetuned-sst-2-english".
+Although this model have some controversies due to its biased predictions, but for our case its a good starting point.
+
+Lets start by creating a minimal flask application.
+
+*included a sample code so that anyone can customize to their needs.*
+
+`app.py`
+
+~~~
+from flask import Flask, request, jsonify
+from transformers import pipeline
+from flask_restx import Resource, Api
+
+
+app = Flask(__name__)
+api = Api(app)
+# if no model is given the default model for the task is loaded so here model param is optional
+classifier = pipeline('sentiment-analysis', model='distilbert-base-uncased-finetuned-sst-2-english')
+@api.route("/sentiment", methods=['GET', 'POST'])
+class SentmentAnalyser(Resource):
+    def get(self):
+        return jsonify({"message":"Welcome to sentiment analysier"})
+    def post(self):
+        text = request.get_json()['text']
+        sentiment = classifier(text)
+        return jsonify(sentiment)
+~~~
+
+
