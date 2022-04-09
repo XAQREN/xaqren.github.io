@@ -41,8 +41,10 @@ from flask_restx import Resource, Api
 
 app = Flask(__name__)
 api = Api(app)
-# if no model is given the default model for the task is loaded so here model param is optional
-classifier = pipeline('sentiment-analysis', model='distilbert-base-uncased-finetuned-sst-2-english')
+#Loading the default model for sentiment 
+print("Model is loading ...")
+classifier = pipeline('sentiment-analysis')
+print("Model loading complete")
 @api.route("/sentiment", methods=['GET', 'POST'])
 class SentmentAnalyser(Resource):
     def get(self):
@@ -51,6 +53,30 @@ class SentmentAnalyser(Resource):
         text = request.get_json()['text']
         sentiment = classifier(text)
         return jsonify(sentiment)
+
+
+if __name__ == "__main__":
+    app.run(debug=False)
 ~~~
 
+`Dockerfile`
+
+~~~
+#Author:sreehari
+FROM python:3.8-slim-buster
+
+WORKDIR /sentment_new
+
+COPY requirements.txt .
+RUN : \
+    && python3 -m venv /venv \
+    && pip install --default-timeout=1000 -r requirements.txt 
+
+COPY . .
+
+EXPOSE 5001
+RUN python3 -c "from transformers import pipeline; pipeline('sentiment-analysis')"
+
+CMD ["gunicorn" "-w" "4" "-b" "127.0.0.1:4000" "sentment_new:app"] 
+~~~
 
