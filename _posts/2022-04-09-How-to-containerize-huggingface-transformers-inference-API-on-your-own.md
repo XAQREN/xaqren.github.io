@@ -59,6 +59,10 @@ if __name__ == "__main__":
     app.run(debug=False)
 ~~~
 
+Important thing to consider when creating an inference API is to load the model on application start up rather than
+loading on every request this will improve the peformance by a great extend since loading the model usually takes some 
+time even from the cache.  
+
 `Dockerfile`
 
 ~~~
@@ -80,3 +84,6 @@ RUN python3 -c "from transformers import pipeline; pipeline('sentiment-analysis'
 CMD ["gunicorn" "-w" "4" "-b" "127.0.0.1:4000" "sentment_new:app"] 
 ~~~
 
+Also I found downloading the model duing build time also a better approach otherwise for large models the model will be downloaded in the 
+applicaion run time which might not be a good idea since it take a long time to download the model for the first time. If we download the
+model in the build time the model will be cached and leads to faster loading on application run time.
